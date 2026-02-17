@@ -141,7 +141,6 @@
     </div>
 
     <script>
-        // Menü vezérlés (KÓD 1 módosítva az UI megjelenítésével)
         function startGame() {
             console.log("start");
             const menu = document.getElementById("menu");
@@ -216,7 +215,7 @@
         const river = new THREE.Mesh(riverGeo, riverMat);
         river.rotation.x = -Math.PI / 2;
         river.position.y = 0.15;
-        river.position.z = -40; // A folyó vonala
+        river.position.z = -40;
         scene.add(river);
 
         // --- BRIDGES ---
@@ -225,12 +224,10 @@
             const bridgeGroup = new THREE.Group();
             const woodMat = new THREE.MeshStandardMaterial({ color: 0x4d3227, roughness: 0.9 });
             
-            // Padló
             const floor = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 22), woodMat);
             floor.receiveShadow = true;
             bridgeGroup.add(floor);
 
-            // Korlát tartók és rudak
             const railGeo = new THREE.BoxGeometry(0.4, 2, 22);
             const lRail = new THREE.Mesh(railGeo, woodMat);
             lRail.position.set(-4.8, 1, 0);
@@ -332,6 +329,81 @@
                 if(Math.sqrt(dx*dx + dz*dz) < m.radius + 5) hitBlocked = true;
             });
             if(!hitBlocked) createTree(tx, tz);
+        }
+
+        // --- MUSHROOMS ---
+        function createMushroom(x, z) {
+            const mushroom = new THREE.Group();
+            const stemGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.8, 6);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0xf5deb3 });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.4;
+            stem.castShadow = true;
+            mushroom.add(stem);
+
+            const capGeo = new THREE.SphereGeometry(0.35, 8, 6);
+            const capMat = new THREE.MeshStandardMaterial({ color: 0xd32f2f });
+            const cap = new THREE.Mesh(capGeo, capMat);
+            cap.position.y = 1.0;
+            cap.scale.y = 0.6;
+            cap.castShadow = true;
+            mushroom.add(cap);
+
+            // White spots
+            const spotMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            for (let i = 0; i < 5; i++) {
+                const spotGeo = new THREE.SphereGeometry(0.08, 6, 6);
+                const spot = new THREE.Mesh(spotGeo, spotMat);
+                const angle = (i / 5) * Math.PI * 2;
+                spot.position.set(Math.cos(angle) * 0.2, 1.15, Math.sin(angle) * 0.2);
+                mushroom.add(spot);
+            }
+
+            mushroom.position.set(x, 0, z);
+            scene.add(mushroom);
+        }
+
+        for(let i = 0; i < 150; i++) {
+            const range = 700;
+            const mx = (Math.random() - 0.5) * range;
+            const mz = (Math.random() - 0.5) * range;
+            let hitBlocked = false;
+            if (Math.abs(mz + 40) < 15) hitBlocked = true;
+            mountains.forEach(m => {
+                const dx = mx - m.x; const dz = mz - m.z;
+                if(Math.sqrt(dx*dx + dz*dz) < m.radius + 5) hitBlocked = true;
+            });
+            if(!hitBlocked) createMushroom(mx, mz);
+        }
+
+        // --- FALLEN TRUNKS ---
+        function createFallenTrunk(x, z) {
+            const trunk = new THREE.Group();
+            const trunkGeo = new THREE.CylinderGeometry(0.4, 0.45, 6, 8);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.95 });
+            const trunkMesh = new THREE.Mesh(trunkGeo, trunkMat);
+            trunkMesh.castShadow = true;
+            trunkMesh.receiveShadow = true;
+            trunk.add(trunkMesh);
+
+            // Random rotation
+            trunk.rotation.z = Math.random() * Math.PI;
+            trunk.rotation.x = (Math.random() - 0.5) * 0.5;
+            trunk.position.set(x, 0.5, z);
+            scene.add(trunk);
+        }
+
+        for(let i = 0; i < 80; i++) {
+            const range = 700;
+            const fx = (Math.random() - 0.5) * range;
+            const fz = (Math.random() - 0.5) * range;
+            let hitBlocked = false;
+            if (Math.abs(fz + 40) < 15) hitBlocked = true;
+            mountains.forEach(m => {
+                const dx = fx - m.x; const dz = fz - m.z;
+                if(Math.sqrt(dx*dx + dz*dz) < m.radius + 5) hitBlocked = true;
+            });
+            if(!hitBlocked) createFallenTrunk(fx, fz);
         }
 
         // --- CHARACTER MODEL ---
