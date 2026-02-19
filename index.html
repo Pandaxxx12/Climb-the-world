@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLIMB THE WORLD! 1.1</title>
+    <title>CLIMB THE WORLD! 1.2</title>
 
     <style>
         /* --- MENÜ STÍLUSOK (KÓD 1) --- */
@@ -117,7 +117,7 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5); 
             pointer-events: none; 
             z-index: 5;
-            display: none; /* Alapértelmezettként rejtve a játék indulásáig */
+            display: none;
         }
         .stats-container { background: rgba(0, 0, 0, 0.4); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); }
         .stamina-label { font-weight: bold; letter-spacing: 1px; color: #00ffcc; }
@@ -125,7 +125,225 @@
         #stamina-fill { width: 100%; height: 100%; background: #00ffcc; transition: width 0.1s; box-shadow: 0 0 10px #00ffcc; }
         #msg { color: #fff; font-size: 1.1em; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
         .hint { font-size: 0.75em; color: #eee; margin-top: 8px; line-height: 1.4; }
-        
+
+        /* --- SKIN MENU STYLES --- */
+        #skinMenu {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            z-index: 99;
+            background: rgba(18, 18, 18, 0.95);
+            border: 2px solid #00ff88;
+            padding: 24px 36px;
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+            backdrop-filter: blur(12px);
+        }
+
+        #skinMenu .skin-title {
+            color: #00ff88;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .skin-btn {
+            display: block;
+            width: 160px;
+            margin-bottom: 12px;
+            padding: 12px 20px;
+            color: #fff;
+            border: 2px solid #00ff88;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .skin-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+        }
+
+        .skin-btn[data-skin="red"] { background: #d32f2f; }
+        .skin-btn[data-skin="black"] { background: #1a1a1a; }
+        .skin-btn[data-skin="blue"] { background: #296bd6; }
+        .skin-btn[data-skin="yellow"] { background: #FFD600; color: #000; }
+
+        .close-menu-hint {
+            color: #888;
+            font-size: 0.75em;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        /* --- CUSTOM ALERT SYSTEM STYLES --- */
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: overlayFadeIn 0.3s ease forwards;
+        }
+
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .alert-box {
+            background: rgba(18, 18, 18, 0.98);
+            border: 2px solid var(--neon);
+            border-radius: 20px;
+            padding: 40px 50px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 136, 0.4),
+                0 0 60px rgba(0, 255, 136, 0.2),
+                inset 0 0 20px rgba(0, 255, 136, 0.1);
+            backdrop-filter: blur(12px);
+            animation: alertSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes alertSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .alert-title {
+            color: var(--neon);
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-align: center;
+            text-shadow: 0 0 15px var(--neon);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .alert-content {
+            color: #e0e0e0;
+            font-size: 16px;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .alert-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .alert-btn {
+            padding: 12px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--neon);
+            background: var(--glass);
+            border: 2px solid var(--neon);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+            text-transform: uppercase;
+            min-width: 120px;
+        }
+
+        .alert-btn:hover {
+            background: rgba(0, 255, 136, 0.25);
+            box-shadow: 0 0 20px var(--neon), inset 0 0 10px rgba(0, 255, 136, 0.2);
+            transform: scale(1.08);
+        }
+
+        .alert-btn:active {
+            transform: scale(0.95);
+        }
+
+        .alert-btn.alert-btn-primary {
+            background: rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .alert-btn-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--neon);
+            border-radius: 50%;
+            color: var(--neon);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .alert-btn-close:hover {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 20px var(--neon);
+            transform: rotate(90deg);
+        }
+
+        .alert-overlay.closing {
+            animation: overlayFadeOut 0.3s ease forwards;
+        }
+
+        .alert-box.closing {
+            animation: alertSlideOut 0.3s ease forwards;
+        }
+
+        @keyframes overlayFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes alertSlideOut {
+            from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+        }
+
+        .alert-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            margin: 20px 0;
+            opacity: 0.5;
+        }
+
         canvas {
             position: absolute;
             top: 0;
@@ -161,9 +379,9 @@
     <div class="menu" id="menu">
         <div class="title">CLIMB THE WORLD!</div>
         <button onclick="startGame()">JÁTÉK INDÍTÁSA</button>
-        <button onclick="showInfo()">SÚGÓ</button>
-        <button onclick="showInfo2()">1.1 ÚJDONSÁGOK</button>
-        <a href="https://github.com" target="_blank" title="Visit GitHub">
+        <button onclick="showCustomAlert('SÚGÓ', 'Keresd meg a Titán csúcsot, mássz fel a zászlóig! Az irányító gombok listája ott van, oldalt az egész játék alatt. Sok sikert kíván a BXcode!')">SÚGÓ</button>
+        <button onclick="showCustomAlert('1.2 ÚJDONSÁGOK', 'Az 1.2-es frissítésben a projekt GitHub linkje lett hozzáadva a játékmenü sarkába. A hó és az eső textúrája javítva lett. A legnagyobb újdonságként a játékba kerültek a különböző skinek, és automatikusan felvesz a karakter esőkabátot az esőben. A skineket az S gombbal lehet változtatni.')">1.2 ÚJDONSÁGOK</button>
+        <a href="https://github.com/Pandaxxx12/Climb-the-world" target="_blank" title="Github">
             <img src="GIT.png" alt="GitHub" class="git-logo">
         </a>
     </div>
@@ -176,19 +394,102 @@
             <div class="hint">
                 <b>NYILAK</b>: Mozgás<br>
                 <b>SPACE GOMB</b>: Mászás<br>
-                <b>CTRL GOMB</b>: Sprintelés
+                <b>CTRL GOMB</b>: Sprintelés<br>
+                <b>S GOMB</b>: Skin választó
             </div>
         </div>
+    </div>
+
+    <!-- SKIN MENU -->
+    <div id="skinMenu">
+        <div class="skin-title">SKINEK</div>
+        <button class="skin-btn" data-skin="red">PIROS</button>
+        <button class="skin-btn" data-skin="black">FEKETE</button>
+        <button class="skin-btn" data-skin="blue">KÉK</button>
+        <button class="skin-btn" data-skin="yellow">SÁRGA ESŐKABÁT</button>
+        <div class="close-menu-hint">Nyomj ESC-t a menü bezárásához</div>
     </div>
 
     <script>
         const gameMusic = document.getElementById('gameMusic');
         const waterMusic = document.getElementById('waterMusic');
 
+        // --- CUSTOM ALERT SYSTEM ---
+        function showCustomAlert(title, content, buttons = null) {
+            const overlay = document.createElement('div');
+            overlay.className = 'alert-overlay';
+
+            const alertBox = document.createElement('div');
+            alertBox.className = 'alert-box';
+            alertBox.style.position = 'relative';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'alert-btn-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = () => closeAlert(overlay, alertBox);
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'alert-title';
+            titleEl.textContent = title;
+
+            const contentEl = document.createElement('div');
+            contentEl.className = 'alert-content';
+            contentEl.textContent = content;
+
+            const divider = document.createElement('div');
+            divider.className = 'alert-divider';
+
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'alert-buttons';
+
+            // Default button if none provided
+            if (!buttons || buttons.length === 0) {
+                const btn = document.createElement('button');
+                btn.className = 'alert-btn alert-btn-primary';
+                btn.textContent = 'OK';
+                btn.onclick = () => closeAlert(overlay, alertBox);
+                buttonsContainer.appendChild(btn);
+            } else {
+                buttons.forEach(buttonConfig => {
+                    const btn = document.createElement('button');
+                    btn.className = `alert-btn ${buttonConfig.primary ? 'alert-btn-primary' : ''}`;
+                    btn.textContent = buttonConfig.text;
+                    btn.onclick = () => {
+                        if (buttonConfig.callback) buttonConfig.callback();
+                        closeAlert(overlay, alertBox);
+                    };
+                    buttonsContainer.appendChild(btn);
+                });
+            }
+
+            alertBox.appendChild(closeBtn);
+            alertBox.appendChild(titleEl);
+            alertBox.appendChild(divider);
+            alertBox.appendChild(contentEl);
+            alertBox.appendChild(buttonsContainer);
+            overlay.appendChild(alertBox);
+            document.body.appendChild(overlay);
+
+            overlay.onclick = (e) => {
+                if (e.target === overlay) closeAlert(overlay, alertBox);
+            };
+
+            // Prevent body scroll when alert is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAlert(overlay, alertBox) {
+            overlay.classList.add('closing');
+            alertBox.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
         function startGame() {
             console.log("start");
             
-            // Play music in loop
             gameMusic.currentTime = 0;
             gameMusic.volume = 1.0;
             gameMusic.play().catch(error => {
@@ -204,13 +505,8 @@
             }, 600);
         }
 
-        function showInfo2() {
-            alert("Az 1.1-es frissítésben a játékhoz eső, eső hangeffektek, hó, hó hangeffektek lettek hozzáadva. Továbbá a játék saját háttérzenét kapott. A pixabay zene/hangtárából származnak az új zenék/hangok.");
-        }
-
-        function showInfo() {
-            alert("Keresd meg a Titán csúcsot, mássz fel oda, a zászlóig! Sok sikert kíván a BXcode!");
-        }
+        // --- OLD ALERT REPLACEMENTS (REMOVED) ---
+        // showInfo() and showInfo2() have been replaced with showCustomAlert calls in buttons
     </script>
 
     <script type="importmap">
@@ -270,6 +566,18 @@
             gameMusic.volume = Math.max(0, Math.min(1, gameMusic.volume + (targetMainVolume - gameMusic.volume) * 0.05));
         }
 
+        // --- CHARACTER SKINS ---
+        const SKINS = {
+            red:    { color: 0xd32f2f, name: "Red" },
+            black:  { color: 0x1a1a1a, name: "Black" },
+            blue:   { color: 0x296bd6, name: "Blue" },
+            yellow: { color: 0xFFD600, name: "Yellow Raincoat" }
+        };
+        let currentSkin = "black";
+        let lastCustomSkin = "black";
+        let skinMenuVisible = false;
+        let isWearingRaincoat = false;
+
         // --- WEATHER SYSTEM ---
         const WEATHER_TYPES = { CLEAR: 0, RAIN: 1, SNOW: 2 };
         const WEATHER_CHANCES = { CLEAR: 0.7, RAIN: 0.2, SNOW: 0.1 };
@@ -304,22 +612,32 @@
             snowSound.pause();
         }
 
-        function changeWeather(scene) {
-            // Remove old particles
-            weatherParticles.forEach(p => scene.remove(p));
-            weatherParticles = [];
+        // Create raindrop texture - circular droplets
+        function createRaindropTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
 
-            currentWeather = selectRandomWeather();
+            // Draw a soft circular raindrop
+            const gradient = ctx.createRadialGradient(16, 10, 0, 16, 16, 14);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.5, 'rgba(200, 220, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(100, 150, 200, 0.3)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(16, 16, 12, 0, Math.PI * 2);
+            ctx.fill();
 
-            if (currentWeather === WEATHER_TYPES.RAIN) {
-                createRain(scene);
-                playWeatherSound(WEATHER_TYPES.RAIN);
-            } else if (currentWeather === WEATHER_TYPES.SNOW) {
-                createSnow(scene);
-                playWeatherSound(WEATHER_TYPES.SNOW);
-            } else {
-                stopWeatherSound();
-            }
+            // Add a highlight for realism
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.arc(12, 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
         }
 
         function createRain(scene) {
@@ -336,17 +654,18 @@
             rainGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3));
             const rainMaterial = new THREE.PointsMaterial({
                 color: 0x4488ff,
-                size: 1.2,
+                size: 2.5,
                 transparent: true,
                 opacity: 0.8,
-                sizeAttenuation: true
+                sizeAttenuation: true,
+                map: createRaindropTexture(),
+                alphaMap: createRaindropTexture()
             });
 
             const rainParticles = new THREE.Points(rainGeometry, rainMaterial);
             scene.add(rainParticles);
             weatherParticles.push(rainParticles);
 
-            // Store rain data for animation
             rainParticles.userData = {
                 velocities: new Float32Array(rainCount * 3),
                 type: 'rain'
@@ -362,8 +681,9 @@
 
         function createSnow(scene) {
             const snowGeometry = new THREE.BufferGeometry();
-            const snowCount = 1500;
+            const snowCount = 1200;
             const positionArray = new Float32Array(snowCount * 3);
+            const sizeArray = new Float32Array(snowCount);
 
             for (let i = 0; i < snowCount * 3; i += 3) {
                 positionArray[i] = (Math.random() - 0.5) * 400;
@@ -371,53 +691,114 @@
                 positionArray[i + 2] = (Math.random() - 0.5) * 400;
             }
 
+            for (let i = 0; i < snowCount; i++) {
+                sizeArray[i] = Math.random() * 3.5 + 1.5;
+            }
+
             snowGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3));
+            snowGeometry.setAttribute('size', new THREE.BufferAttribute(sizeArray, 1));
+
             const snowMaterial = new THREE.PointsMaterial({
                 color: 0xffffff,
-                size: 2.1,
+                size: 3,
                 transparent: true,
-                opacity: 0.9,
-                sizeAttenuation: true
+                opacity: 0.85,
+                sizeAttenuation: true,
+                sizeVariation: true,
+                map: createSnowflakeTexture(),
+                alphaMap: createSnowflakeTexture()
             });
 
             const snowParticles = new THREE.Points(snowGeometry, snowMaterial);
             scene.add(snowParticles);
             weatherParticles.push(snowParticles);
 
-            // Store snow data for animation
             snowParticles.userData = {
                 velocities: new Float32Array(snowCount * 3),
-                type: 'snow'
+                sizes: sizeArray,
+                type: 'snow',
+                wobbleOffsets: new Float32Array(snowCount)
             };
 
             const velocities = snowParticles.userData.velocities;
+            const wobbleOffsets = snowParticles.userData.wobbleOffsets;
+            
             for (let i = 0; i < snowCount * 3; i += 3) {
-                velocities[i] = (Math.random() - 0.5) * 0.3;
-                velocities[i + 1] = -Math.random() * 0.3 - 0.2;
-                velocities[i + 2] = (Math.random() - 0.5) * 0.3;
+                const index = Math.floor(i / 3);
+                velocities[i] = (Math.random() - 0.5) * 0.25;
+                velocities[i + 1] = -Math.random() * 0.4 - 0.15;
+                velocities[i + 2] = (Math.random() - 0.5) * 0.25;
+                wobbleOffsets[index] = Math.random() * Math.PI * 2;
             }
+        }
+
+        function createSnowflakeTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(16, 16, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const x = 16 + Math.cos(angle) * 10;
+                const y = 16 + Math.sin(angle) * 10;
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
         }
 
         function updateWeatherParticles() {
             weatherParticles.forEach(particles => {
                 const positions = particles.geometry.attributes.position.array;
                 const velocities = particles.userData.velocities;
+                const time = Date.now() * 0.001;
 
-                for (let i = 0; i < positions.length; i += 3) {
-                    positions[i] += velocities[i];
-                    positions[i + 1] += velocities[i + 1];
-                    positions[i + 2] += velocities[i + 2];
+                if (particles.userData.type === 'snow') {
+                    const wobbleOffsets = particles.userData.wobbleOffsets;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const index = i / 3;
+                        const wobbleX = Math.sin(time * 0.5 + wobbleOffsets[index]) * 0.15;
+                        const wobbleZ = Math.cos(time * 0.3 + wobbleOffsets[index]) * 0.12;
+                        
+                        positions[i] += velocities[i] + wobbleX;
+                        positions[i + 1] += velocities[i + 1];
+                        positions[i + 2] += velocities[i + 2] + wobbleZ;
 
-                    // Respawn particles that are too low
-                    if (positions[i + 1] < -10) {
-                        positions[i + 1] = 200 + Math.random() * 50;
+                        if (positions[i + 1] < -10) {
+                            positions[i + 1] = 220 + Math.random() * 30;
+                        }
+
+                        if (positions[i] > 250) positions[i] = -250;
+                        if (positions[i] < -250) positions[i] = 250;
+                        if (positions[i + 2] > 250) positions[i + 2] = -250;
+                        if (positions[i + 2] < -250) positions[i + 2] = 250;
                     }
+                } else {
+                    for (let i = 0; i < positions.length; i += 3) {
+                        positions[i] += velocities[i];
+                        positions[i + 1] += velocities[i + 1];
+                        positions[i + 2] += velocities[i + 2];
 
-                    // Wrap around X and Z
-                    if (positions[i] > 200) positions[i] = -200;
-                    if (positions[i] < -200) positions[i] = 200;
-                    if (positions[i + 2] > 200) positions[i + 2] = -200;
-                    if (positions[i + 2] < -200) positions[i + 2] = 200;
+                        if (positions[i + 1] < -10) {
+                            positions[i + 1] = 200 + Math.random() * 50;
+                        }
+
+                        if (positions[i] > 200) positions[i] = -200;
+                        if (positions[i] < -200) positions[i] = 200;
+                        if (positions[i + 2] > 200) positions[i + 2] = -200;
+                        if (positions[i + 2] < -200) positions[i + 2] = 200;
+                    }
                 }
 
                 particles.geometry.attributes.position.needsUpdate = true;
@@ -605,7 +986,6 @@
             cap.castShadow = true;
             mushroom.add(cap);
 
-            // White spots
             const spotMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
             for (let i = 0; i < 5; i++) {
                 const spotGeo = new THREE.SphereGeometry(0.08, 6, 6);
@@ -642,7 +1022,6 @@
             trunkMesh.receiveShadow = true;
             trunk.add(trunkMesh);
 
-            // Random rotation
             trunk.rotation.z = Math.random() * Math.PI;
             trunk.rotation.x = (Math.random() - 0.5) * 0.5;
             trunk.position.set(x, 0.5, z);
@@ -662,17 +1041,43 @@
             if(!hitBlocked) createFallenTrunk(fx, fz);
         }
 
-        // --- CHARACTER MODEL ---
+        // --- CHARACTER MODEL WITH ENHANCED RAINCOAT ---
         const player = new THREE.Group();
         const characterModel = new THREE.Group();
         player.add(characterModel);
-        const matJacket = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+        const matJacket = new THREE.MeshStandardMaterial({ color: SKINS[currentSkin].color, roughness: 0.6 });
+        const matRaincoat = new THREE.MeshStandardMaterial({ 
+            color: 0xFFD600, 
+            roughness: 0.3, 
+            metalness: 0.1,
+            emissive: 0xccaa00,
+            emissiveIntensity: 0.3
+        });
         const matAccent = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x003333 });
         const matSkin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
         const matHelmet = new THREE.MeshStandardMaterial({ color: 0xff5500 });
+        
         const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.75, 6, 16), matJacket);
         torso.castShadow = true;
         characterModel.add(torso);
+
+        const raincoatHood = new THREE.Group();
+        const hoodGeo = new THREE.SphereGeometry(0.32, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+        const raincoatMesh = new THREE.Mesh(hoodGeo, matRaincoat);
+        raincoatMesh.position.y = 0.75;
+        raincoatMesh.scale.y = 0.9;
+        raincoatHood.add(raincoatMesh);
+        
+        const shoulderExt = new THREE.Mesh(
+            new THREE.SphereGeometry(0.28, 16, 16),
+            matRaincoat
+        );
+        shoulderExt.position.y = 0.3;
+        shoulderExt.scale.set(1.3, 0.6, 1.1);
+        raincoatHood.add(shoulderExt);
+        characterModel.add(raincoatHood);
+        raincoatHood.visible = false;
+
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 20, 20), matSkin);
         head.position.y = 0.75;
         const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.28, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2), matHelmet);
@@ -696,23 +1101,80 @@
             group.position.set(x, y, 0); characterModel.add(group);
             return { group, joint };
         }
-        const lArm = createProLimb(-0.42, 0.4, true); const rArm = createProLimb(0.42, 0.4, true);
-        const lLeg = createProLimb(-0.2, -0.38, false); const rLeg = createProLimb(0.2, -0.38, false);
+        const lArm = createProLimb(-0.42, 0.4, true); 
+        const rArm = createProLimb(0.42, 0.4, true);
+        const lLeg = createProLimb(-0.2, -0.38, false); 
+        const rLeg = createProLimb(0.2, -0.38, false);
 
         player.position.set(0, 1.25, 20);
         scene.add(player);
 
+        function changeSkin(skinName) {
+            currentSkin = skinName;
+            if (skinName !== "yellow") {
+                lastCustomSkin = skinName;
+                matJacket.color.set(SKINS[skinName].color);
+                isWearingRaincoat = false;
+                raincoatHood.visible = false;
+            } else {
+                matJacket.color.set(SKINS[skinName].color);
+                isWearingRaincoat = true;
+                raincoatHood.visible = true;
+            }
+        }
+
         // --- CONTROLS & PHYSICS ---
         const keys = {};
-        window.onkeydown = (e) => keys[e.code] = true;
+        window.onkeydown = (e) => {
+            keys[e.code] = true;
+            if (e.code === "KeyS" && !skinMenuVisible) {
+                skinMenuVisible = true;
+                document.getElementById("skinMenu").style.display = "block";
+            } else if (e.code === "Escape" && skinMenuVisible) {
+                skinMenuVisible = false;
+                document.getElementById("skinMenu").style.display = "none";
+            }
+        };
         window.onkeyup = (e) => keys[e.code] = false;
+
+        document.querySelectorAll("#skinMenu .skin-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                const newSkin = this.getAttribute("data-skin");
+                changeSkin(newSkin);
+                skinMenuVisible = false;
+                document.getElementById("skinMenu").style.display = "none";
+            });
+        });
+
         let stamina = 100; let walkTime = 0; let win = false; let winTriggered = false;
         const staminaFill = document.getElementById('stamina-fill');
 
-        // Initialize weather
         let weatherChangeTimer = 0;
-        const WEATHER_CHANGE_INTERVAL = 15000; // Change weather every 15 seconds
+        const WEATHER_CHANGE_INTERVAL = 15000;
         changeWeather(scene);
+
+        function changeWeather(scene) {
+            weatherParticles.forEach(p => scene.remove(p));
+            weatherParticles = [];
+
+            currentWeather = selectRandomWeather();
+
+            if (currentWeather === WEATHER_TYPES.RAIN) {
+                createRain(scene);
+                changeSkin("yellow");
+                document.getElementById("msg").innerText = "Keresd meg a Titán csúcsot!";
+                playWeatherSound(WEATHER_TYPES.RAIN);
+            } else if (currentWeather === WEATHER_TYPES.SNOW) {
+                createSnow(scene);
+                changeSkin(lastCustomSkin);
+                document.getElementById("msg").innerText = "Keresd meg a Titán csúcsot!";
+                playWeatherSound(WEATHER_TYPES.SNOW);
+            } else {
+                changeSkin(lastCustomSkin);
+                document.getElementById("msg").innerText = "Keresd meg a Titán csúcsot!";
+                stopWeatherSound();
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
@@ -740,13 +1202,9 @@
             });
             const inWater = !onBridge && Math.abs(player.position.z + 40) < 10;
 
-            // Update water audio
             updateWaterAudio(player.position.x, player.position.z);
-
-            // Update weather particles
             updateWeatherParticles();
 
-            // Change weather periodically
             weatherChangeTimer += 16;
             if (weatherChangeTimer >= WEATHER_CHANGE_INTERVAL) {
                 weatherChangeTimer = 0;
