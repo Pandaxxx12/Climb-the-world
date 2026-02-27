@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLIMB THE WORLD! 1.2</title>
+    <title>CLIMB THE WORLD! 1.3</title>
 
     <style>
         /* --- MENÜ STÍLUSOK (KÓD 1) --- */
@@ -37,6 +37,10 @@
             background: var(--overlay);
             backdrop-filter: blur(3px);
             z-index: 0;
+        }
+
+        body.game-started::before {
+            animation: overlayFadeOut 0.8s ease forwards;
         }
 
         .menu {
@@ -126,6 +130,13 @@
         #msg { color: #fff; font-size: 1.1em; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
         .hint { font-size: 0.75em; color: #eee; margin-top: 8px; line-height: 1.4; }
 
+        /* --- HUNGER SYSTEM STYLES --- */
+        .hunger-label { font-weight: bold; letter-spacing: 1px; color: #ff6b6b; margin-top: 15px; }
+        .hunger-bar { width: 200px; height: 10px; background: #333; border-radius: 5px; margin-top: 5px; overflow: hidden; }
+        #hunger-fill { width: 100%; height: 100%; background: #ff6b6b; transition: width 0.1s; box-shadow: 0 0 10px #ff6b6b; }
+        .berry-icon { display: inline-block; width: 16px; height: 16px; margin-left: 5px; vertical-align: middle; }
+        .interaction-hint { font-size: 0.85em; color: #ffbb00; margin-top: 8px; font-weight: bold; }
+
         /* --- SKIN MENU STYLES --- */
         #skinMenu {
             display: none;
@@ -174,6 +185,10 @@
         .skin-btn[data-skin="black"] { background: #1a1a1a; }
         .skin-btn[data-skin="blue"] { background: #296bd6; }
         .skin-btn[data-skin="yellow"] { background: #FFD600; color: #000; }
+        .skin-btn[data-skin="green"] { background: #2d5016; }
+        .skin-btn[data-skin="purple"] { background: #5a3d7e; }
+        .skin-btn[data-skin="orange"] { background: #ff8c00; }
+        .skin-btn[data-skin="white"] { background: #f0f0f0; color: #333; border-color: #999; }
 
         .close-menu-hint {
             color: #888;
@@ -376,11 +391,26 @@
         Your browser does not support the audio element.
     </audio>
 
+    <audio id="climbSound" loop>
+        <source src="CLIMB.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="avalancheSound">
+        <source src="AVALANCHE.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="eatSound">
+        <source src="EAT.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
     <div class="menu" id="menu">
         <div class="title">CLIMB THE WORLD!</div>
         <button onclick="startGame()">JÁTÉK INDÍTÁSA</button>
-        <button onclick="showCustomAlert('SÚGÓ', 'Keresd meg a Titán csúcsot, mássz fel a zászlóig! Az irányító gombok listája ott van, oldalt az egész játék alatt. Sok sikert kíván a BXcode!')">SÚGÓ</button>
-        <button onclick="showCustomAlert('1.2 ÚJDONSÁGOK', 'Az 1.2-es frissítésben a projekt GitHub linkje lett hozzáadva a játékmenü sarkába. A hó és az eső textúrája javítva lett. A legnagyobb újdonságként a játékba kerültek a különböző skinek, és automatikusan felvesz a karakter esőkabátot az esőben. A skineket az S gombbal lehet változtatni.')">1.2 ÚJDONSÁGOK</button>
+        <button onclick="showCustomAlert('SÚGÓ', 'Keresd meg a Titán csúcsot, mássz fel a zászlóig! Egyél a fákról bogyókat, mert ha túl éhes vagy, akkor nem töltődik az energiád. Az irányító gombok listája ott van, oldalt az egész játék alatt. Menj fel egy fára és egyél bogyókat, hogy csökkentsd az éhségét! Sok sikert kíván a BXcode!')">SÚGÓ</button>
+        <button onclick="showCustomAlert('1.3 ÚJDONSÁGOK + HUNGER', 'Az 1.3-as frissítésben a játékba veszélyes lavinák érkeztek, skin frissítések, és madarak repkednek az égen, vadvirágok tarkítják a pázsitot. Az új HUNGER SYSTEM-ben menj fel a fákhoz és egyél bogyókat az energia visszaadásához! Sok sikert!')">1.3 ÚJDONSÁGOK</button>
         <a href="https://github.com/Pandaxxx12/Climb-the-world" target="_blank" title="Github">
             <img src="GIT.png" alt="GitHub" class="git-logo">
         </a>
@@ -390,12 +420,18 @@
         <div class="stats-container">
             <div class="stamina-label">Energia</div>
             <div class="stamina-bar"><div id="stamina-fill"></div></div>
+            
+            <div class="hunger-label">Éhség</div>
+            <div class="hunger-bar"><div id="hunger-fill"></div></div>
+            
             <div id="msg">Keresd meg a Titán csúcsot!</div>
+            <div class="interaction-hint" id="interaction-hint" style="display:none;">Egyél bogyókat!</div>
             <div class="hint">
                 <b>NYILAK</b>: Mozgás<br>
                 <b>SPACE GOMB</b>: Mászás<br>
                 <b>CTRL GOMB</b>: Sprintelés<br>
-                <b>S GOMB</b>: Skin választó
+                <b>S GOMB</b>: Skin választó<br>
+                <b>E GOMB</b>: Bogyó evés
             </div>
         </div>
     </div>
@@ -403,10 +439,14 @@
     <!-- SKIN MENU -->
     <div id="skinMenu">
         <div class="skin-title">SKINEK</div>
-        <button class="skin-btn" data-skin="red">PIROS</button>
-        <button class="skin-btn" data-skin="black">FEKETE</button>
-        <button class="skin-btn" data-skin="blue">KÉK</button>
-        <button class="skin-btn" data-skin="yellow">SÁRGA ESŐKABÁT</button>
+        <button class="skin-btn" data-skin="red">Nyár</button>
+        <button class="skin-btn" data-skin="black">Hátizsákos</button>
+        <button class="skin-btn" data-skin="blue">Kék</button>
+        <button class="skin-btn" data-skin="yellow">Esőkabát</button>
+        <button class="skin-btn" data-skin="purple">Lila</button>
+        <button class="skin-btn" data-skin="green">Vadász</button>
+        <button class="skin-btn" data-skin="orange">Narancssárga</button>
+        <button class="skin-btn" data-skin="white">Kövérkés</button>
         <div class="close-menu-hint">Nyomj ESC-t a menü bezárásához</div>
     </div>
 
@@ -441,26 +481,6 @@
 
             const buttonsContainer = document.createElement('div');
             buttonsContainer.className = 'alert-buttons';
-
-            // Default button if none provided
-            if (!buttons || buttons.length === 0) {
-                const btn = document.createElement('button');
-                btn.className = 'alert-btn alert-btn-primary';
-                btn.textContent = 'OK';
-                btn.onclick = () => closeAlert(overlay, alertBox);
-                buttonsContainer.appendChild(btn);
-            } else {
-                buttons.forEach(buttonConfig => {
-                    const btn = document.createElement('button');
-                    btn.className = `alert-btn ${buttonConfig.primary ? 'alert-btn-primary' : ''}`;
-                    btn.textContent = buttonConfig.text;
-                    btn.onclick = () => {
-                        if (buttonConfig.callback) buttonConfig.callback();
-                        closeAlert(overlay, alertBox);
-                    };
-                    buttonsContainer.appendChild(btn);
-                });
-            }
 
             alertBox.appendChild(closeBtn);
             alertBox.appendChild(titleEl);
@@ -498,15 +518,13 @@
 
             const menu = document.getElementById("menu");
             menu.classList.add("fadeOut");
+            document.body.classList.add("game-started");
 
             setTimeout(() => {
                 menu.style.display = "none";
                 document.getElementById("ui").style.display = "block";
             }, 600);
         }
-
-        // --- OLD ALERT REPLACEMENTS (REMOVED) ---
-        // showInfo() and showInfo2() have been replaced with showCustomAlert calls in buttons
     </script>
 
     <script type="importmap">
@@ -525,10 +543,28 @@
         const waterMusic = document.getElementById('waterMusic');
         const rainSound = document.getElementById('rainSound');
         const snowSound = document.getElementById('snowSound');
+        const climbSound = document.getElementById('climbSound');
+        const avalancheSound = document.getElementById('avalancheSound');
+        const eatSound = document.getElementById('eatSound');
 
+        let climbAudioState = { isPlaying: false };
         let waterAudioState = { isPlaying: false, isFading: false, targetVolume: 0 };
         const WATER_DETECTION_RANGE = 45;
         const WATER_FADE_SPEED = 0.02;
+
+        function updateClimbingAudio(isClimbing) {
+            if (isClimbing && !climbAudioState.isPlaying) {
+                climbAudioState.isPlaying = true;
+                climbSound.currentTime = 0;
+                climbSound.volume = 0.5;
+                climbSound.play().catch(error => {
+                    console.warn("Climb sound playback failed:", error);
+                });
+            } else if (!isClimbing && climbAudioState.isPlaying) {
+                climbAudioState.isPlaying = false;
+                climbSound.pause();
+            }
+        }
 
         function updateWaterAudio(playerX, playerZ) {
             const distanceToWater = Math.abs(playerZ + 40);
@@ -571,7 +607,11 @@
             red:    { color: 0xd32f2f, name: "Red" },
             black:  { color: 0x1a1a1a, name: "Black" },
             blue:   { color: 0x296bd6, name: "Blue" },
-            yellow: { color: 0xFFD600, name: "Yellow Raincoat" }
+            yellow: { color: 0xFFD600, name: "Yellow Raincoat" },
+            green:  { color: 0x2d5016, name: "Forest Scout" },
+            purple: { color: 0x5a3d7e, name: "Midnight" },
+            orange: { color: 0xff8c00, name: "Desert" },
+            white:  { color: 0xf0f0f0, name: "Chubby" }
         };
         let currentSkin = "black";
         let lastCustomSkin = "black";
@@ -580,12 +620,157 @@
 
         // --- WEATHER SYSTEM ---
         const WEATHER_TYPES = { CLEAR: 0, RAIN: 1, SNOW: 2 };
-        const WEATHER_CHANCES = { CLEAR: 0.7, RAIN: 0.2, SNOW: 0.1 };
+        let WEATHER_CHANCES = { CLEAR: 0.7, RAIN: 0.2, SNOW: 0.1 };
 
         let currentWeather = WEATHER_TYPES.CLEAR;
         let weatherParticles = [];
 
+        // --- AVALANCHE SYSTEM ---
+        let avalanches = [];
+        const AVALANCHE_TRIGGER_CHANCE = 0.0009;
+        const AVALANCHE_PARTICLE_COUNT = 4000;
+        let lastAvalancheTime = 0;
+        const AVALANCHE_COOLDOWN = 3000;
+
+        // --- HUNGER SYSTEM ---
+        let hunger = 100;
+        const HUNGER_DEPLETE_RATE = 0.008;
+        const HUNGER_BERRY_RESTORE = 15;
+        const TREE_INTERACTION_RANGE = 5;
+        let trees = [];
+        let nearbyTreeIndex = -1;
+
+        function createAvalanche(startX, startZ, mountainHeight) {
+            if (Date.now() - lastAvalancheTime < AVALANCHE_COOLDOWN) return;
+            
+            lastAvalancheTime = Date.now();
+            
+            document.getElementById("msg").innerText = "⚠️ LAVINA! ⚠️";
+            document.getElementById("msg").style.color = "#ff6b6b";
+            setTimeout(() => {
+                document.getElementById("msg").innerText = "Keresd meg a Titán csúcsot!";
+                document.getElementById("msg").style.color = "#fff";
+            }, 2000);
+            
+            avalancheSound.currentTime = 0;
+            avalancheSound.volume = 0.6;
+            avalancheSound.play().catch(error => console.warn("Avalanche sound failed:", error));
+
+            const avalancheGeo = new THREE.BufferGeometry();
+            const positionArray = new Float32Array(AVALANCHE_PARTICLE_COUNT * 3);
+            const colorArray = new Float32Array(AVALANCHE_PARTICLE_COUNT * 3);
+
+            for (let i = 0; i < AVALANCHE_PARTICLE_COUNT * 3; i += 3) {
+                const angle = Math.random() * Math.PI * 2;
+                const spread = Math.random() * 15;
+                positionArray[i] = startX + Math.cos(angle) * spread;
+                positionArray[i + 1] = mountainHeight - 5;
+                positionArray[i + 2] = startZ + Math.sin(angle) * spread;
+
+                const colorVar = 0.7 + Math.random() * 0.3;
+                colorArray[i] = colorVar;
+                colorArray[i + 1] = colorVar;
+                colorArray[i + 2] = colorVar;
+            }
+
+            avalancheGeo.setAttribute('position', new THREE.BufferAttribute(positionArray, 3));
+            avalancheGeo.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+
+            const avalancheMaterial = new THREE.PointsMaterial({
+                size: 1.2,
+                transparent: true,
+                opacity: 0.9,
+                sizeAttenuation: true,
+                vertexColors: true
+            });
+
+            const avalancheParticles = new THREE.Points(avalancheGeo, avalancheMaterial);
+            scene.add(avalancheParticles);
+
+            avalanches.push({
+                particles: avalancheParticles,
+                velocities: new Float32Array(AVALANCHE_PARTICLE_COUNT * 3),
+                ages: new Float32Array(AVALANCHE_PARTICLE_COUNT),
+                startX: startX,
+                startZ: startZ,
+                mountainHeight: mountainHeight,
+                lifespan: 6000
+            });
+
+            const avalanche = avalanches[avalanches.length - 1];
+            for (let i = 0; i < AVALANCHE_PARTICLE_COUNT * 3; i += 3) {
+                const idx = i / 3;
+                avalanche.velocities[i] = (Math.random() - 0.5) * 0.8;
+                avalanche.velocities[i + 1] = -Math.random() * 2 - 1;
+                avalanche.velocities[i + 2] = (Math.random() - 0.5) * 0.8;
+                avalanche.ages[idx] = 0;
+            }
+        }
+
+        function updateAvalanches() {
+            for (let a = avalanches.length - 1; a >= 0; a--) {
+                const avalanche = avalanches[a];
+                const positions = avalanche.particles.geometry.attributes.position.array;
+
+                for (let i = 0; i < AVALANCHE_PARTICLE_COUNT * 3; i += 3) {
+                    const idx = i / 3;
+                    avalanche.ages[idx]++;
+
+                    positions[i] += avalanche.velocities[i] * 0.95;
+                    positions[i + 1] += avalanche.velocities[i + 1];
+                    positions[i + 2] += avalanche.velocities[i + 2] * 0.95;
+
+                    avalanche.velocities[i] *= 0.98;
+                    avalanche.velocities[i + 1] = Math.min(avalanche.velocities[i + 1] + 0.15, -0.5);
+                    avalanche.velocities[i + 2] *= 0.98;
+
+                    const fadeStart = avalanche.lifespan * 0.7;
+                    if (avalanche.ages[idx] > fadeStart) {
+                        const fadeProgress = (avalanche.ages[idx] - fadeStart) / (avalanche.lifespan - fadeStart);
+                        avalanche.particles.material.opacity = Math.max(0, 0.9 * (1 - fadeProgress));
+                    }
+
+                    if (positions[i + 1] < -50) {
+                        positions[i + 1] = -100;
+                    }
+                }
+
+                avalanche.particles.geometry.attributes.position.needsUpdate = true;
+
+                const positions2 = avalanche.particles.geometry.attributes.position.array;
+                for (let i = 0; i < AVALANCHE_PARTICLE_COUNT * 3; i += 3) {
+                    const px = positions2[i];
+                    const py = positions2[i + 1];
+                    const pz = positions2[i + 2];
+                    
+                    const dx = player.position.x - px;
+                    const dy = player.position.y - py;
+                    const dz = player.position.z - pz;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+                    if (dist < 2) {
+                        stamina = 0;
+                        player.position.y = 1.25;
+                        player.position.x += (Math.random() - 0.5) * 3;
+                        player.position.z += (Math.random() - 0.5) * 3;
+                    }
+                }
+
+                if (avalanche.ages[0] > avalanche.lifespan) {
+                    scene.remove(avalanche.particles);
+                    avalanches.splice(a, 1);
+                }
+            }
+        }
+
         function selectRandomWeather() {
+            // NO SNOW if wearing red skin!
+            if (currentSkin === "red") {
+                const rand = Math.random();
+                if (rand < 0.75) return WEATHER_TYPES.CLEAR;
+                return WEATHER_TYPES.RAIN;
+            }
+            
             const rand = Math.random();
             if (rand < WEATHER_CHANCES.CLEAR) return WEATHER_TYPES.CLEAR;
             if (rand < WEATHER_CHANCES.CLEAR + WEATHER_CHANCES.RAIN) return WEATHER_TYPES.RAIN;
@@ -612,14 +797,12 @@
             snowSound.pause();
         }
 
-        // Create raindrop texture - circular droplets
         function createRaindropTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 32;
             canvas.height = 32;
             const ctx = canvas.getContext('2d');
 
-            // Draw a soft circular raindrop
             const gradient = ctx.createRadialGradient(16, 10, 0, 16, 16, 14);
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(0.5, 'rgba(200, 220, 255, 0.8)');
@@ -630,7 +813,6 @@
             ctx.arc(16, 16, 12, 0, Math.PI * 2);
             ctx.fill();
 
-            // Add a highlight for realism
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.beginPath();
             ctx.arc(12, 10, 4, 0, Math.PI * 2);
@@ -931,6 +1113,77 @@
 
         mountains.push(...mData);
 
+        // --- WILDFLOWERS ---
+        function createWildflower(x, z) {
+            const flower = new THREE.Group();
+            
+            // Stem
+            const stemGeo = new THREE.CylinderGeometry(0.08, 0.12, 1.2, 6);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x2d5016 });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.6;
+            stem.castShadow = true;
+            flower.add(stem);
+
+            // Petals - random bright colors
+            const petalColors = [0xff1493, 0xff69b4, 0xffb6c1, 0xff4500, 0xffa500, 0xffff00, 0x00ff00, 0x00ced1, 0x9370db];
+            const petalColor = petalColors[Math.floor(Math.random() * petalColors.length)];
+            const petalMat = new THREE.MeshStandardMaterial({ color: petalColor, emissive: petalColor, emissiveIntensity: 0.3 });
+
+            // Create 5-6 petals in a circle
+            const petalCount = 5 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < petalCount; i++) {
+                const angle = (i / petalCount) * Math.PI * 2;
+                const petalGeo = new THREE.SphereGeometry(0.2, 8, 8);
+                const petal = new THREE.Mesh(petalGeo, petalMat);
+                petal.scale.set(1, 1.3, 0.7);
+                petal.position.set(
+                    Math.cos(angle) * 0.3,
+                    1.2,
+                    Math.sin(angle) * 0.3
+                );
+                petal.castShadow = true;
+                flower.add(petal);
+            }
+
+            // Center
+            const centerMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffcc00, emissiveIntensity: 0.8 });
+            const centerGeo = new THREE.SphereGeometry(0.15, 8, 8);
+            const center = new THREE.Mesh(centerGeo, centerMat);
+            center.position.y = 1.2;
+            center.castShadow = true;
+            flower.add(center);
+
+            // Leaves
+            for (let i = 0; i < 2; i++) {
+                const leafGeo = new THREE.SphereGeometry(0.18, 8, 8);
+                const leafMat = new THREE.MeshStandardMaterial({ color: 0x228b22 });
+                const leaf = new THREE.Mesh(leafGeo, leafMat);
+                leaf.scale.set(0.6, 1.2, 0.4);
+                leaf.position.set((i - 0.5) * 0.25, 0.5, 0.15);
+                leaf.rotation.z = i === 0 ? 0.4 : -0.4;
+                leaf.castShadow = true;
+                flower.add(leaf);
+            }
+
+            flower.position.set(x, 0, z);
+            scene.add(flower);
+        }
+
+        // Create LOTS of wildflowers!
+        for(let i = 0; i < 350; i++) {
+            const range = 700; 
+            const fx = (Math.random() - 0.5) * range;
+            const fz = (Math.random() - 0.5) * range;
+            let hitBlocked = false;
+            if (Math.abs(fz + 40) < 15) hitBlocked = true;
+            mountains.forEach(m => {
+                const dx = fx - m.x; const dz = fz - m.z;
+                if(Math.sqrt(dx*dx + dz*dz) < m.radius + 10) hitBlocked = true;
+            });
+            if(!hitBlocked) createWildflower(fx, fz);
+        }
+
         // --- TREES ---
         function createTree(x, z) {
             const tree = new THREE.Group();
@@ -953,6 +1206,9 @@
             const scale = 0.8 + Math.random() * 0.5;
             tree.scale.set(scale, scale, scale);
             scene.add(tree);
+            
+            // Store tree position for hunger system
+            trees.push({ position: new THREE.Vector3(x, 0, z) });
         }
 
         for(let i = 0; i < 2000; i++) {
@@ -1012,6 +1268,311 @@
             if(!hitBlocked) createMushroom(mx, mz);
         }
 
+        // --- PROFESSIONAL BIRD SYSTEM ---
+        class Bird {
+            constructor(scene, x, z, y, birdMaterial) {
+                this.scene = scene;
+                this.position = new THREE.Vector3(x, y, z);
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.15,
+                    (Math.random() - 0.3) * 0.05,
+                    (Math.random() - 0.5) * 0.15
+                );
+                this.acceleration = new THREE.Vector3();
+                this.rotation = new THREE.Euler();
+                
+                // Bird parameters
+                this.maxSpeed = 0.12;
+                this.maxForce = 0.008;
+                this.separationDist = 8;
+                this.alignmentDist = 15;
+                this.cohesionDist = 20;
+                this.separationWeight = 1.2;
+                this.alignmentWeight = 0.8;
+                this.cohesionWeight = 0.6;
+                this.fleeWeight = 1.5;
+                
+                // Animation state
+                this.wingPhase = Math.random() * Math.PI * 2;
+                this.flappingSpeed = 0.08 + Math.random() * 0.04;
+                this.flapAmplitude = 0.3;
+                
+                // Create bird mesh group
+                this.group = new THREE.Group();
+                this.group.position.copy(this.position);
+                
+                // Body
+                const bodyGeo = new THREE.CapsuleGeometry(0.08, 0.25, 4, 8);
+                this.body = new THREE.Mesh(bodyGeo, birdMaterial);
+                this.body.castShadow = true;
+                this.body.receiveShadow = true;
+                this.group.add(this.body);
+                
+                // Head
+                const headGeo = new THREE.SphereGeometry(0.05, 10, 10);
+                this.head = new THREE.Mesh(headGeo, birdMaterial);
+                this.head.position.z = 0.1;
+                this.group.add(this.head);
+                
+                // Eyes
+                const eyeGeo = new THREE.SphereGeometry(0.015, 8, 8);
+                const eyeMat = new THREE.MeshStandardMaterial({ 
+                    color: 0x000000, 
+                    emissive: 0x333333,
+                    emissiveIntensity: 0.5
+                });
+                const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+                leftEye.position.set(-0.025, 0.025, 0.12);
+                const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+                rightEye.position.set(0.025, 0.025, 0.12);
+                this.group.add(leftEye, rightEye);
+                
+                // Beak
+                const beakGeo = new THREE.ConeGeometry(0.02, 0.08, 6);
+                const beakMat = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
+                const beak = new THREE.Mesh(beakGeo, beakMat);
+                beak.position.z = 0.15;
+                beak.rotation.x = Math.PI / 2;
+                this.group.add(beak);
+                
+                // Wings
+                this.wings = this._createWings();
+                this.group.add(this.wings);
+                
+                // Tail
+                this.tail = this._createTail();
+                this.group.add(this.tail);
+                
+                scene.add(this.group);
+            }
+            
+            _createWings() {
+                const wingsGroup = new THREE.Group();
+                
+                const wingGeo = new THREE.BoxGeometry(0.35, 0.08, 0.04);
+                const wingMat = new THREE.MeshStandardMaterial({ 
+                    color: 0x333333, 
+                    roughness: 0.6,
+                    metalness: 0.1
+                });
+                
+                this.leftWing = new THREE.Mesh(wingGeo, wingMat);
+                this.leftWing.position.x = -0.1;
+                this.leftWing.castShadow = true;
+                wingsGroup.add(this.leftWing);
+                
+                this.rightWing = new THREE.Mesh(wingGeo, wingMat);
+                this.rightWing.position.x = 0.1;
+                this.rightWing.castShadow = true;
+                wingsGroup.add(this.rightWing);
+                
+                return wingsGroup;
+            }
+            
+            _createTail() {
+                const tailGroup = new THREE.Group();
+                const tailGeo = new THREE.BoxGeometry(0.08, 0.15, 0.02);
+                const tailMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+                
+                const tail = new THREE.Mesh(tailGeo, tailMat);
+                tail.position.z = -0.15;
+                tail.castShadow = true;
+                tailGroup.add(tail);
+                
+                return tailGroup;
+            }
+            
+            applyForce(force) {
+                this.acceleration.add(force);
+            }
+            
+            separate(birds) {
+                const steer = new THREE.Vector3();
+                let count = 0;
+                
+                for (let other of birds) {
+                    if (other === this) continue;
+                    const dist = this.position.distanceTo(other.position);
+                    
+                    if (dist < this.separationDist && dist > 0) {
+                        const diff = new THREE.Vector3().subVectors(
+                            this.position,
+                            other.position
+                        ).normalize().multiplyScalar(1 / dist);
+                        steer.add(diff);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    steer.divideScalar(count);
+                    if (steer.length() > 0) {
+                        steer.normalize().multiplyScalar(this.maxSpeed);
+                        steer.sub(this.velocity);
+                        steer.clampLength(0, this.maxForce);
+                    }
+                }
+                return steer.multiplyScalar(this.separationWeight);
+            }
+            
+            align(birds) {
+                const steer = new THREE.Vector3();
+                let count = 0;
+                
+                for (let other of birds) {
+                    if (other === this) continue;
+                    const dist = this.position.distanceTo(other.position);
+                    
+                    if (dist < this.alignmentDist && dist > 0) {
+                        steer.add(other.velocity);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    steer.divideScalar(count);
+                    steer.normalize().multiplyScalar(this.maxSpeed);
+                    steer.sub(this.velocity);
+                    steer.clampLength(0, this.maxForce);
+                }
+                return steer.multiplyScalar(this.alignmentWeight);
+            }
+            
+            cohere(birds) {
+                const steer = new THREE.Vector3();
+                let count = 0;
+                
+                for (let other of birds) {
+                    if (other === this) continue;
+                    const dist = this.position.distanceTo(other.position);
+                    
+                    if (dist < this.cohesionDist && dist > 0) {
+                        steer.add(other.position);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    steer.divideScalar(count);
+                    steer.sub(this.position);
+                    steer.normalize().multiplyScalar(this.maxSpeed);
+                    steer.sub(this.velocity);
+                    steer.clampLength(0, this.maxForce);
+                }
+                return steer.multiplyScalar(this.cohesionWeight);
+            }
+            
+            fleeFrom(targetPos, fleeDistance = 30) {
+                const steer = new THREE.Vector3();
+                const dist = this.position.distanceTo(targetPos);
+                
+                if (dist < fleeDistance) {
+                    steer.subVectors(this.position, targetPos);
+                    steer.normalize().multiplyScalar(this.maxSpeed);
+                    steer.sub(this.velocity);
+                    steer.clampLength(0, this.maxForce);
+                }
+                return steer.multiplyScalar(this.fleeWeight);
+            }
+            
+            boundaryWrap(boundary = 350) {
+                if (this.position.x > boundary) this.position.x = -boundary;
+                if (this.position.x < -boundary) this.position.x = boundary;
+                if (this.position.z > boundary) this.position.z = -boundary;
+                if (this.position.z < -boundary) this.position.z = boundary;
+            }
+            
+            flockBehavior(birds, playerPos) {
+                this.acceleration.set(0, 0, 0);
+                
+                const sep = this.separate(birds);
+                const ali = this.align(birds);
+                const coh = this.cohere(birds);
+                const flee = this.fleeFrom(playerPos, 25);
+                
+                this.applyForce(sep);
+                this.applyForce(ali);
+                this.applyForce(coh);
+                this.applyForce(flee);
+            }
+            
+            update(birds, playerPos) {
+                this.flockBehavior(birds, playerPos);
+                
+                // Physics
+                this.velocity.add(this.acceleration);
+                this.velocity.clampLength(0, this.maxSpeed);
+                this.position.add(this.velocity);
+                
+                // Wrap boundary
+                this.boundaryWrap();
+                
+                // Hover motion
+                const hoverForce = Math.sin(Date.now() * 0.0008) * 0.02;
+                this.position.y += hoverForce;
+                this.position.y = Math.max(15, Math.min(100, this.position.y));
+                
+                // Update group position
+                this.group.position.copy(this.position);
+                
+                // Orientation (look in direction of movement)
+                if (this.velocity.length() > 0.01) {
+                    this.rotation.y = Math.atan2(this.velocity.x, this.velocity.z);
+                    this.rotation.x = Math.atan2(-this.velocity.y, 
+                        Math.sqrt(this.velocity.x ** 2 + this.velocity.z ** 2)) * 0.3;
+                }
+                
+                this.group.rotation.order = 'YXZ';
+                this.group.rotation.copy(this.rotation);
+                
+                // Wing animation
+                this.wingPhase += this.flappingSpeed;
+                const wingBeat = Math.sin(this.wingPhase) * this.flapAmplitude;
+                this.leftWing.rotation.z = -wingBeat;
+                this.rightWing.rotation.z = wingBeat;
+                
+                // Tail flick with wing rhythm
+                const tailFlick = Math.cos(this.wingPhase * 0.5) * 0.15;
+                this.tail.rotation.x = tailFlick;
+            }
+            
+            dispose() {
+                this.group.traverse(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                });
+                this.scene.remove(this.group);
+            }
+        }
+        
+        // Bird manager
+        const birds = [];
+        const birdMaterial = new THREE.MeshStandardMaterial({
+            color: 0x444444,
+            roughness: 0.5,
+            metalness: 0.3,
+            emissive: 0x111111,
+            emissiveIntensity: 0.2
+        });
+        
+        // Create flock
+        function initializeBirds(scene, count = 35) {
+            for (let i = 0; i < count; i++) {
+                const x = (Math.random() - 0.5) * 200;
+                const y = 30 + Math.random() * 50;
+                const z = (Math.random() - 0.5) * 200 - 50;
+                birds.push(new Bird(scene, x, z, y, birdMaterial));
+            }
+        }
+        
+        function updateBirds(playerPosition) {
+            for (let bird of birds) {
+                bird.update(birds, playerPosition);
+            }
+        }
+        
+        initializeBirds(scene, 35);
+
         // --- FALLEN TRUNKS ---
         function createFallenTrunk(x, z) {
             const trunk = new THREE.Group();
@@ -1041,7 +1602,7 @@
             if(!hitBlocked) createFallenTrunk(fx, fz);
         }
 
-        // --- CHARACTER MODEL WITH ENHANCED RAINCOAT ---
+        // --- CHARACTER MODEL WITH BACKPACK ---
         const player = new THREE.Group();
         const characterModel = new THREE.Group();
         player.add(characterModel);
@@ -1056,10 +1617,45 @@
         const matAccent = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x003333 });
         const matSkin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
         const matHelmet = new THREE.MeshStandardMaterial({ color: 0xff5500 });
+        const matBackpack = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.8 });
+        const matBackpackStraps = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.7 });
+        const matBaseCap = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 });
+        const matCapVisor = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5 });
+        const matShorts = new THREE.MeshStandardMaterial({ color: 0x1b4d2a, roughness: 0.7 });
         
         const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.75, 6, 16), matJacket);
         torso.castShadow = true;
         characterModel.add(torso);
+
+        // --- BACKPACK ---
+        const backpackGroup = new THREE.Group();
+        
+        const backpackMain = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.65, 0.25), matBackpack);
+        backpackMain.position.set(0, 0, 0.28);
+        backpackMain.castShadow = true;
+        backpackGroup.add(backpackMain);
+        
+        const backpackFlap = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.25, 0.22), matBackpack);
+        backpackFlap.position.set(0, 0.35, 0.28);
+        backpackFlap.castShadow = true;
+        backpackGroup.add(backpackFlap);
+        
+        const leftStrap = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.8, 0.08), matBackpackStraps);
+        leftStrap.position.set(-0.22, 0.1, 0.28);
+        leftStrap.castShadow = true;
+        backpackGroup.add(leftStrap);
+        
+        const rightStrap = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.8, 0.08), matBackpackStraps);
+        rightStrap.position.set(0.22, 0.1, 0.28);
+        rightStrap.castShadow = true;
+        backpackGroup.add(rightStrap);
+        
+        const bottomPocket = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.15, 0.15), matBackpackStraps);
+        bottomPocket.position.set(0, -0.25, 0.28);
+        backpackGroup.add(bottomPocket);
+        
+        characterModel.add(backpackGroup);
+        backpackGroup.visible = false;
 
         const raincoatHood = new THREE.Group();
         const hoodGeo = new THREE.SphereGeometry(0.32, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -1077,6 +1673,77 @@
         raincoatHood.add(shoulderExt);
         characterModel.add(raincoatHood);
         raincoatHood.visible = false;
+
+        // --- BASEBALL CAP (GRAY) FOR RED SKIN ---
+        const baseballCapGroup = new THREE.Group();
+        
+        const capCrown = new THREE.Mesh(
+            new THREE.SphereGeometry(0.28, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.55),
+            matBaseCap
+        );
+        capCrown.position.y = 0.82;
+        capCrown.scale.set(1, 0.75, 1);
+        capCrown.castShadow = true;
+        baseballCapGroup.add(capCrown);
+
+        const capVisor = new THREE.Mesh(
+            new THREE.BoxGeometry(0.42, 0.12, 0.35),
+            matCapVisor
+        );
+        capVisor.position.set(0, 0.65, -0.22);
+        capVisor.rotation.z = -0.15;
+        capVisor.castShadow = true;
+        baseballCapGroup.add(capVisor);
+
+        const capBand = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.28, 0.28, 0.15, 16, 1, true),
+            matBaseCap
+        );
+        capBand.position.set(0, 0.68, 0.15);
+        capBand.rotation.x = -0.3;
+        capBand.castShadow = true;
+        baseballCapGroup.add(capBand);
+
+        characterModel.add(baseballCapGroup);
+        baseballCapGroup.visible = false;
+
+        // --- SLIMMED SHORTS FOR RED SKIN ---
+        const shortsGroup = new THREE.Group();
+        
+        const shortsBody = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.20, 0.22, 0.45, 16),
+            matShorts
+        );
+        shortsBody.position.y = -0.35;
+        shortsBody.castShadow = true;
+        shortsGroup.add(shortsBody);
+
+        const leftLeg = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.11, 0.4, 12),
+            matShorts
+        );
+        leftLeg.position.set(-0.14, -0.62, 0);
+        leftLeg.castShadow = true;
+        shortsGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.11, 0.4, 12),
+            matShorts
+        );
+        rightLeg.position.set(0.14, -0.62, 0);
+        rightLeg.castShadow = true;
+        shortsGroup.add(rightLeg);
+
+        const waistband = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.21, 0.21, 0.08, 16),
+            new THREE.MeshStandardMaterial({ color: 0x0d2818, roughness: 0.6 })
+        );
+        waistband.position.y = -0.12;
+        waistband.castShadow = true;
+        shortsGroup.add(waistband);
+
+        characterModel.add(shortsGroup);
+        shortsGroup.visible = false;
 
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 20, 20), matSkin);
         head.position.y = 0.75;
@@ -1116,10 +1783,43 @@
                 matJacket.color.set(SKINS[skinName].color);
                 isWearingRaincoat = false;
                 raincoatHood.visible = false;
+                
+                // Reset character to normal scale
+                characterModel.scale.set(1, 1, 1);
+                torso.scale.set(1, 1, 1);
+                head.scale.set(1, 1, 1);
+                
+                if (skinName === "black") {
+                    backpackGroup.visible = true;
+                    baseballCapGroup.visible = false;
+                    shortsGroup.visible = false;
+                } else if (skinName === "red") {
+                    backpackGroup.visible = false;
+                    baseballCapGroup.visible = true;
+                    shortsGroup.visible = true;
+                } else if (skinName === "white") {
+                    // MEDIUM CHUBBY MODE! 🍔
+                    characterModel.scale.set(1.15, 1.1, 1.15);
+                    torso.scale.set(1.2, 1.1, 1.2);
+                    head.scale.set(1.08, 1.08, 1.08);
+                    backpackGroup.visible = false;
+                    baseballCapGroup.visible = false;
+                    shortsGroup.visible = false;
+                } else {
+                    backpackGroup.visible = false;
+                    baseballCapGroup.visible = false;
+                    shortsGroup.visible = false;
+                }
             } else {
                 matJacket.color.set(SKINS[skinName].color);
                 isWearingRaincoat = true;
                 raincoatHood.visible = true;
+                characterModel.scale.set(1, 1, 1);
+                torso.scale.set(1, 1, 1);
+                head.scale.set(1, 1, 1);
+                backpackGroup.visible = false;
+                baseballCapGroup.visible = false;
+                shortsGroup.visible = false;
             }
         }
 
@@ -1133,6 +1833,18 @@
             } else if (e.code === "Escape" && skinMenuVisible) {
                 skinMenuVisible = false;
                 document.getElementById("skinMenu").style.display = "none";
+            } else if (e.code === "KeyE" && nearbyTreeIndex !== -1 && hunger < 100) {
+                // Eat berry from nearby tree!
+                hunger = Math.min(100, hunger + HUNGER_BERRY_RESTORE);
+                eatSound.currentTime = 0;
+                eatSound.volume = 0.6;
+                eatSound.play().catch(error => console.warn("Eat sound failed:", error));
+                document.getElementById("msg").innerText = "NYAMM!";
+                document.getElementById("msg").style.color = "#ffbb00";
+                setTimeout(() => {
+                    document.getElementById("msg").innerText = "Keresd meg a Titán csúcsot!";
+                    document.getElementById("msg").style.color = "#fff";
+                }, 2000);
             }
         };
         window.onkeyup = (e) => keys[e.code] = false;
@@ -1148,6 +1860,7 @@
 
         let stamina = 100; let walkTime = 0; let win = false; let winTriggered = false;
         const staminaFill = document.getElementById('stamina-fill');
+        const hungerFill = document.getElementById('hunger-fill');
 
         let weatherChangeTimer = 0;
         const WEATHER_CHANGE_INTERVAL = 15000;
@@ -1183,9 +1896,12 @@
             const angle = cycleProgress * Math.PI * 2;
             const sunHeight = Math.sin(angle);
             sun.position.set(Math.cos(angle) * 100, sunHeight * 100, Math.cos(angle) * 50);
+            
+            // MORE SUNSHINE when wearing RED skin!
+            const redSkinBoost = currentSkin === "red" ? 1.5 : 1.0;
             const dayIntensity = Math.max(0, sunHeight);
-            sun.intensity = dayIntensity * 1.2;
-            ambient.intensity = 0.2 + dayIntensity * 0.4;
+            sun.intensity = dayIntensity * 1.2 * redSkinBoost;
+            ambient.intensity = (0.2 + dayIntensity * 0.4) * redSkinBoost;
 
             if (sunHeight > 0.1) skyColor.lerpColors(sunsetColor, dayColor, (sunHeight - 0.1) / 0.9);
             else if (sunHeight > -0.1) skyColor.lerpColors(nightColor, sunsetColor, (sunHeight + 0.1) / 0.2);
@@ -1204,12 +1920,39 @@
 
             updateWaterAudio(player.position.x, player.position.z);
             updateWeatherParticles();
+            updateAvalanches();
+            updateBirds(player.position);
 
             weatherChangeTimer += 16;
             if (weatherChangeTimer >= WEATHER_CHANGE_INTERVAL) {
                 weatherChangeTimer = 0;
                 changeWeather(scene);
             }
+
+            // --- HUNGER SYSTEM UPDATE ---
+            hunger -= HUNGER_DEPLETE_RATE;
+            hunger = Math.max(0, hunger);
+            
+            // Check proximity to trees
+            nearbyTreeIndex = -1;
+            for (let i = 0; i < trees.length; i++) {
+                const dist = player.position.distanceTo(trees[i].position);
+                if (dist < TREE_INTERACTION_RANGE) {
+                    nearbyTreeIndex = i;
+                    break;
+                }
+            }
+            
+            // Show/hide interaction hint
+            const hintElement = document.getElementById("interaction-hint");
+            if (nearbyTreeIndex !== -1 && hunger < 100) {
+                hintElement.style.display = "block";
+            } else {
+                hintElement.style.display = "none";
+            }
+            
+            // Update hunger bar UI
+            hungerFill.style.width = `${Math.max(0, hunger)}%`;
 
             const isSprinting = (keys['ControlLeft'] || keys['ControlRight']) && stamina > 2;
             let moveSpeed = isSprinting ? 0.4 : 0.18;
@@ -1257,14 +2000,26 @@
             if (keys['Space'] && contact && stamina > 0 && !win) {
                 player.position.y += 0.16; stamina -= 0.15; climbing = true;
                 isFalling = false;
+
+                if (Math.random() < AVALANCHE_TRIGGER_CHANCE) {
+                    mountains.forEach(m => {
+                        const dx = player.position.x - m.x, dz = player.position.z - m.z;
+                        const dist = Math.sqrt(dx*dx + dz*dz);
+                        if (dist < m.radius * 0.8) {
+                            createAvalanche(m.x, m.z, m.height);
+                        }
+                    });
+                }
             } else if (player.position.y > floorLevel) {
                 player.position.y -= 0.35;
                 isFalling = true;
             } else {
                 player.position.y = floorLevel; 
-                if (stamina < 100) stamina += 1.0; 
+                if (stamina < 100 && hunger > 50) stamina += 1.0; 
                 isFalling = false;
             }
+
+            updateClimbingAudio(climbing);
 
             if (isFalling) {
                 const panic = Math.sin(time * 0.02) * 0.3;
